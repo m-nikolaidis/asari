@@ -15,7 +15,8 @@ from mass2chem.search import find_mzdiff_pairs_from_masstracks
 from .mass_functions import (flatten_tuplelist, 
                             landmark_guided_mapping, 
                             calculate_selectivity)
-from .chromatograms import (nn_cluster_by_mz_seeds,
+from .chromatograms import (INTENSITY_DATA_TYPE, 
+                            nn_cluster_by_mz_seeds,
                             rt_lowess_calibration_debug,
                             rt_lowess_calibration, 
                             remap_intensity_track,
@@ -452,7 +453,7 @@ class CompositeMap:
         
         mzDict = dict(self.MassGrid['mz'])
         mzlist = list(self.MassGrid.index)                          # this gets indices as keys, per mass track
-        basetrack = np.zeros(self.rt_length, dtype=np.int64)        # self.rt_length defines max rt number
+        basetrack = np.zeros(self.rt_length, dtype=INTENSITY_DATA_TYPE)        # self.rt_length defines max rt number
         _comp_dict, _comp_ms2 = {}, {}
         for k in mzlist: 
             _comp_dict[k] = basetrack.copy()

@@ -1,3 +1,6 @@
+v1.18.2 -> v1.18.3
+    Enforcing float32 for intensity arrays.
+
 v1.17.5 -> v1.18.2
     Improved join function with operational/combined mass tracks.
 

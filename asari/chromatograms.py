@@ -19,7 +19,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 from .mass_functions import (check_close_mzs, 
                              nn_cluster_by_mz_seeds)
 
-INTENSITY_DATA_TYPE = np.int64
+INTENSITY_DATA_TYPE = np.float32
 # int32 uses less memory - for large data one can check if int32 is safe, 
 # i.e. under 2E9, or transform data
 
@@ -66,7 +66,7 @@ def extract_massTracks_(infile,
     for spec in ms_expt:
         if spec.ms_level == 1:                         # MS Level 1 
             rt_times.append(spec.scan_time_in_minutes()*60)
-            intensities = spec.i.astype(int)
+            intensities = spec.i.astype(INTENSITY_DATA_TYPE)       #(int)
             good_positions = intensities > min_intensity
             alldata += [(mz, ii, inten) for mz, inten in zip(spec.mz[good_positions], intensities[good_positions])]
             ii += 1
@@ -136,9 +136,7 @@ def extract_single_track_fullrt_length(bin, rt_length, INTENSITY_DATA_TYPE=INTEN
         data points, in format of [(mz_int, scan_num, intensity_int), ...].
     rt_length : int     
         full number of scans.
-    INTENSITY_DATA_TYPE : any int numpy.dtype, optional, default: INTENSITY_DATA_TYPE (currently np.int64)
-        default to np.int64. 
-        Being future safe, but int32 may be adequate and more efficient.
+    INTENSITY_DATA_TYPE :numpy.dtype, optional, default to np.float32. 
      
     Returns
     -------
@@ -309,13 +307,14 @@ def get_thousandth_bins(mzTree, mz_tolerance_ppm=5, min_timepoints=5, min_peak_h
     for ii in range(1, len(ks)):
         _delta = ks[ii] - ks[ii-1]
         # merge adjacent bins if they are next to each other or within ppm tolerance
+        # This may create bins bigger than tolerance, but will be dealt in bin_to_mass_tracks
         if _delta==1 or _delta < tol_ * ks[ii]:
             tmp.append(ks[ii])
         else:
             bins_of_bins.append(tmp)
             tmp = [ks[ii]]
+    bins_of_bins.append(tmp)    # the last one at end of loop
 
-    bins_of_bins.append(tmp)
     good_bins = []
     for bin in bins_of_bins:
         datatuples = []
