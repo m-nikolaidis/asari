@@ -7,7 +7,7 @@ from functools import partial
 import yaml
 
 from .__init__ import __version__
-from .workflow import (process_project, read_project_dir) # get_mz_list, process_xics, create_export_folders
+from .workflow import (process_project, read_project_dir, read_project_file) # get_mz_list, process_xics, create_export_folders
 from .default_parameters import PARAMETERS
 
 from .analyze import estimate_min_peak_height, analyze_single_sample
@@ -20,10 +20,19 @@ booleandict = build_boolean_dict()
 SUBCOMMANDS = ["analyze", "process", "annotate", "viz", "join", "list_workflows"]
               # "xic", "extract", 
 
+def get_input_file_list(parameters):
+    '''
+    Resolve the list of mzML input files, either from a text file of paths
+    (parameters['files']) or by listing parameters['input'] directory.
+    '''
+    if parameters.get('files'):
+        return read_project_file(parameters['files'])
+    return read_project_dir(parameters['input'])
+
 def process(parameters):
-    list_input_files = read_project_dir(parameters['input'])
+    list_input_files = get_input_file_list(parameters)
     if not list_input_files:
-        print("No valid mzML files are found in the input directory :(")
+        print("No valid mzML files are found :(")
     else:
         process_project(list_input_files, parameters)
 
@@ -55,7 +64,7 @@ def viz(parameters, args):
 def update_peak_detection_params(parameters, args=None):
     if parameters['autoheight']:
         try:
-            parameters['min_peak_height'] = estimate_min_peak_height(read_project_dir(args.input), parameters)
+            parameters['min_peak_height'] = estimate_min_peak_height(get_input_file_list(parameters), parameters)
             parameters['min_intensity_threshold'] = parameters['min_peak_height'] / 10
         except ValueError as err:
             print("Problems with input files: {0}. Back to default min_peak_height.".format(err))
@@ -148,7 +157,15 @@ def update_params_from_CLI(parameters, args, debug_print=False):
             parameters['input'] = os.path.dirname(args.input)
             debug_print(to_print=f"Input determined to be file")
             debug_print(to_print=f"Setting input to {parameters['input']}")
-    
+
+    # set the input file list, an alternative to --input directory listing
+    if args.files:
+        assert os.path.isfile(args.files), f"Files list {args.files} not found."
+        parameters['files'] = args.files
+        debug_print(to_print=f"Setting files to {parameters['files']}")
+    else:
+        debug_print(to_print=f"Using default files: None")
+
     # set the output directory
     if args.output:
         parameters['outdir'] = os.path.abspath(args.output)
@@ -362,9 +379,11 @@ def build_parser():
             help='Custom paramter file in YAML. Use parameters.yaml as template.')
     parser.add_argument('-c', '--multicores', type=int,
             help='nunmber of CPU cores intented to use')
-    parser.add_argument('-f', '--reference', type=str,
-            help='designated reference file for alignments')
-
+    
+    parser.add_argument('--files', type=str,
+            help='text file listing input mzML file paths, one per line; alternative to --input directory')
+    parser.add_argument('--reference', type=str,
+                help='designated reference file for alignments')
     parser.add_argument('--database_mode', type=str,
             help='determines how intermediates are stored, can be "ondisk" or "memory"')
     parser.add_argument('--wlen', type=int,

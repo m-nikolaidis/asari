@@ -1,7 +1,10 @@
+v1.18.3 -> v1.18.4
+    Added '--files' arg, alternative to using a single directory as input.
+
 v1.18.2 -> v1.18.3
     Enforcing float32 for intensity arrays.
 
-v1.17.5 -> v1.18.2
+v1.18.1 -> v1.18.2
     Improved join function with operational/combined mass tracks.
 
 v1.17.5 -> v1.18.1
