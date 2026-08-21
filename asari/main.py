@@ -109,22 +109,19 @@ def update_params_from_CLI(parameters, args, debug_print=False):
     if parameters is None:
         raise Exception("No parameters provided.")
     
-    # update parameters from user specified yaml file
+    # update parameters from user specified yaml or json file
     if args.parameters:
+        content = open(args.parameters).read()
         # can be yaml
         try:
-            parameters.update(
-                yaml.load(open(args.parameters).read(), Loader=yaml.Loader)
-            )
-        except:
-            raise Exception("Failure parsing provided yaml parameters file.")
-        # can be json
-        try:
-            parameters.update(
-                json.load(open(args.parameters))
-            )
-        except:
-            raise Exception("Failure parsing provided JSON parameters file.")
+            new_parameters = yaml.load(content, Loader=yaml.Loader)
+        except yaml.YAMLError:
+            # can be json
+            try:
+                new_parameters = json.loads(content)
+            except json.JSONDecodeError:
+                raise Exception("Failure parsing provided parameters file as YAML or JSON.")
+        parameters.update(new_parameters)
         debug_print(to_print=f"Updating default parameters from {args.parameters}")
     else:
         debug_print(to_print=f"Using default parameters")

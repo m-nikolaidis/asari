@@ -68,9 +68,9 @@ For help information: `asari -h`
 
 ### Main usages
 
-To process all mzML files under directory mydir/projectx_dir:
+To process all mzML files under directory mydir/projectx_dir (or use `--files` to specify input mzML files):
 
-`asari process --mode pos --input mydir/projectx_dir`
+`asari process --input mydir/projectx_dir`
 
 To annotate GC-MS feature table using a custom database and alkane standards:
 
@@ -88,7 +88,7 @@ To use LC-MS/MS workflow to produce feature tables and MS/MS clusters:
 
 To search MS/MS agains a database:
 
-`annotate --db /Users/lish/li.proj/Resources/MSMS_database.pkl -i mydir/projectx_dir/ms2_spectra.json -o mydir/projectx_dir/ --workflow LCMSMS
+`asari annotate --db /Users/lish/li.proj/Resources/MSMS_database.pkl -i mydir/projectx_dir/ms2_spectra.json -o mydir/projectx_dir/ --workflow LCMSMS
 `
 
 To pre-annotate LC-MS feature table then match to a database (default HMDB for now):

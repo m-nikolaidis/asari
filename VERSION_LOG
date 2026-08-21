@@ -1,3 +1,6 @@
+v1.18.4 -> v1.18.5
+    Bug fixes on YAML parsing, multicores in batch_deep_detect_elution_peaks.
+
 v1.18.3 -> v1.18.4
     Added '--files' arg, alternative to using a single directory as input.
 
