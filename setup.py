@@ -44,7 +44,7 @@ setup(
   zip_safe=True,
   entry_points = {
         'console_scripts': ['asari=asari.command_line:main', 
-                            'asari_gui=asari.gui:main_gui'],
+                            'asari_gui=asari.tools.gui:main_gui'],
     },
 
   python_requires='>=3.7',

@@ -1,9 +1,9 @@
-'''
+"""
 This was JMM's prototype.
-Desktop GUI or web GUI should be a separate package. 
-The asari core package should remain cloud-friendly, with minimal dependency on deployment. 
-Even matplotlib is optional. 
-'''
+Desktop GUI or web GUI should be a separate package.
+The asari core package should remain cloud-friendly, with minimal dependency on deployment.
+Even matplotlib is optional.
+"""
 
 import tkinter as tk
 from tkinter import scrolledtext, messagebox, filedialog
@@ -11,17 +11,37 @@ import threading
 from contextlib import redirect_stdout, redirect_stderr
 from asari.default_parameters import PARAMETERS
 from asari.main import SUBCOMMANDS, update_peak_detection_params, run_asari
+from types import SimpleNamespace
+
 
 def run_program(params):
-    run_asari(params)
+    # Provide an args-like shim so subcommand handlers that read
+    # args.<name> (analyze/annotate/join/viz) work when invoked
+    # in-process from the GUI. Missing keys default to None.
+    args = SimpleNamespace(
+        **{
+            k: params.get(k)
+            for k in (
+                "input",
+                "table_for_viz",
+                "min_peak_height",
+                "min_prominence_threshold",
+                "cal_min_peak_height",
+                "min_intensity_threshold",
+            )
+        }
+    )
+    run_asari(params, args)
+
 
 def select_directory(params):
     root = tk.Tk()
     root.withdraw()
     directory = filedialog.askdirectory(title="Select Input Directory")
-    params['input'] = directory
+    params["input"] = directory
     root.destroy()
     return params
+
 
 class TextRedirector:
     def __init__(self, text_widget):
@@ -33,6 +53,7 @@ class TextRedirector:
 
     def flush(self):
         pass
+
 
 def run_program_thread(params, text_widget, continue_button):
     redirector = TextRedirector(text_widget)
@@ -49,18 +70,27 @@ def start_program_gui(params):
     text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, height=20, width=80)
     text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
 
-    continue_button = tk.Button(root, text="Continue", state=tk.NORMAL, command=root.destroy)
+    continue_button = tk.Button(
+        root, text="Continue", state=tk.NORMAL, command=root.destroy
+    )
     continue_button.pack(pady=10)
 
-    threading.Thread(target=run_program_thread, args=(params, text_area, continue_button), daemon=True).start()
+    threading.Thread(
+        target=run_program_thread,
+        args=(params, text_area, continue_button),
+        daemon=True,
+    ).start()
     root.mainloop()
     return params
 
+
 def show_disclaimer():
     accepted = [False]
+
     def on_accept():
         accepted[0] = True
         disclaimer.destroy()
+
     def on_decline():
         exit()
 
@@ -78,18 +108,22 @@ def show_disclaimer():
     By clicking "I Accept", you agree to the terms and conditions of the disclaimer.
 
     """
-    tk.Label(disclaimer, text=DISCLAIMER, wraplength=400, justify="center").pack(padx=20, pady=20)
+    tk.Label(disclaimer, text=DISCLAIMER, wraplength=400, justify="center").pack(
+        padx=20, pady=20
+    )
     tk.Button(disclaimer, text="I Accept", command=on_accept).pack(pady=10)
     tk.Button(disclaimer, text="I Decline", command=on_decline).pack(pady=10)
 
     disclaimer.mainloop()
     return accepted[0]
 
+
 def create_ui(data):
     result = {}
+
     def run_callback():
         nonlocal result
-        output = {}
+        output = dict(data)
         for key, widget in widgets.items():
             if types[key] is bool:
                 output[key] = widget.get()
@@ -123,7 +157,9 @@ def create_ui(data):
 
     frame = tk.Frame(canvas)
     canvas.create_window((0, 0), window=frame, anchor="nw")
-    frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    frame.bind(
+        "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
 
     widgets = {}
     types = {}
@@ -164,8 +200,10 @@ def create_ui(data):
             result[k] = None
     return result
 
+
 def create_selection_ui(options, data, key):
     result = {}
+
     def set_value(value):
         nonlocal result
         data[key] = value
@@ -182,28 +220,30 @@ def create_selection_ui(options, data, key):
     root.mainloop()
     return result
 
+
 def main_gui():
     if not show_disclaimer():
         return
     params = select_directory(PARAMETERS)
-    if params['input'] is None:
+    if not params.get("input"):
         messagebox.showerror("Error", "No directory selected. Exiting.")
         return
     params = create_ui(params)
-    if 'autoheight' not in params:
+    if "autoheight" not in params:
         messagebox.showerror("Error", "Parameters issue (code 1). Exiting.")
         return
     try:
         params = update_peak_detection_params(params)
-        params = create_selection_ui(SUBCOMMANDS, params, "run_gui")
+        params = create_selection_ui(SUBCOMMANDS, params, "run")
     except:
         messagebox.showerror("Error", "Parameters issue (code 2). Exiting.")
 
     try:
         params = start_program_gui(params)
     except Exception as e:
-        messagebox.showerror("Thanks for trying Asari GUI: ", e)
+        messagebox.showerror("Thanks for trying Asari GUI", str(e))
+
 
 if __name__ == "__main__":
+    print("Invoked")
     main_gui()
-    
